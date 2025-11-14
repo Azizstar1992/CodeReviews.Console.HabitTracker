@@ -9,13 +9,20 @@ namespace habit_tracker{
         static void Main(string[] args)
         {
             string connectionString =(@"Data Source=habit_tracker.db");
-            using (var connection = new SQLiteConnection(connectionString))
+            using (var connection = new SqliteConnection(connectionString))
             {
+              
                 connection.Open();
                 var tableCmd = connection.CreateCommand();
                 
-                tableCmd = @
+                tableCmd.CommandText = @"CREATE TABLE IF NOT EXISTS drinking_water (
+                Id INTEGER PRIMARY KEY  AUTOINCREMENT,
+                Date TEXT,
+                Quantity INTEGER
+                )";
 
+                tableCmd.ExecuteNonQuery();
+                connection.Close();
 
 
             }
