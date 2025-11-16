@@ -182,8 +182,8 @@ namespace habit_tracker
             return typeInput;
         }
 
-        // printing function
-        private static void printAllRecords()
+        // Printing function
+        private static void PrintAllRecords()
         {
 
             Console.Clear();
@@ -238,7 +238,7 @@ namespace habit_tracker
 
         private static void GetAllRecords()
         {
-            printAllRecords();
+            PrintAllRecords();
             Console.WriteLine("\nPress any key to return to the menu...");
             Console.ReadKey(true);
         }
@@ -249,7 +249,7 @@ namespace habit_tracker
 
             while (keepDeleting)
             {
-                printAllRecords();
+                PrintAllRecords();
 
                 Console.WriteLine("Enter the ID of the habit you wish to delete, or type 'x' to return to the menu:");
                 string? input = Console.ReadLine();
@@ -316,7 +316,7 @@ namespace habit_tracker
         {
             while (true) // loop until user updates something or exits
             {
-                printAllRecords();
+                PrintAllRecords();
 
                 Console.WriteLine(
                     "Enter the ID of the record you want to update.\n" +
