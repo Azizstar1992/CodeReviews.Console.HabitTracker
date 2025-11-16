@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Dynamic;
 using System.Globalization;
 using System.Numerics;
 using Microsoft.Data.Sqlite;
@@ -11,6 +12,7 @@ namespace habit_tracker
     {
         public int Id { get; set; }
         public int quantity { get; set; }
+        public string habitType { get; set; }
         public DateTime Date { get; set; }
     }
     class Program
@@ -20,9 +22,9 @@ namespace habit_tracker
 
         static void Main(string[] args)
         {
+            // main function creates database on start up if not exists, in same folder
             dbFile = "./habit_tracker.db";
-            Console.WriteLine("Database will be at: " + System.IO.Path.GetFullPath(dbFile));
-            connectionString = ($"Data Source={dbFile}");
+            connectionString = $"Data Source={dbFile}";
             using (var connection = new SqliteConnection(connectionString))
             {
 
@@ -32,6 +34,7 @@ namespace habit_tracker
                 tableCmd.CommandText = @"CREATE TABLE IF NOT EXISTS drinking_water (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Date TEXT,
+                habitType TEXT,
                 Quantity INTEGER
                 )";
 
@@ -42,13 +45,14 @@ namespace habit_tracker
 
 
             }
+            //entry point for menu
             GetUserInput();
 
         }
 
         static void GetUserInput()
         {
-
+            // using switch statement for menu
             bool closeApp = false;
             while (!closeApp)
             {
@@ -91,24 +95,43 @@ namespace habit_tracker
         private static void insert()
         {
             string? date = GetDateInput();
+            string? habit = getHabit();
             int quantity = GetNumberInput("\n\nPlease Insert a number of glasses or other measure of your choice (no decimals allowed)\n\n");
-            using (var connection = new SqliteConnection(connectionString))
+            // wrapped in try statement incase error accessing database
+            try
             {
-                connection.Open();
-                var tableCmd = connection.CreateCommand();
-                tableCmd.CommandText = $"INSERT INTO drinking_water(date,quantity) VALUES('{date}',{quantity})";
-                tableCmd.ExecuteNonQuery();
-                connection.Close();
+                using (var connection = new SqliteConnection(connectionString))
+                {
+                    connection.Open();
+                    var tableCmd = connection.CreateCommand();
+                    tableCmd.CommandText = "INSERT INTO drinking_water(Date, habitType, Quantity) VALUES(@date, @habit, @quantity)";
+                    tableCmd.Parameters.AddWithValue("@date", date);
+                    tableCmd.Parameters.AddWithValue("@habit", habit);
+                    tableCmd.Parameters.AddWithValue("@quantity", quantity);
+
+                    tableCmd.ExecuteNonQuery();
+                    connection.Close();
+                }
+            }
+            catch (SqliteException ex)
+            {
+                Console.WriteLine("Unexpected Database Error");
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Unexpected Error");
             }
 
         }
 
         internal static int GetNumberInput(string message)
         {
-            Console.WriteLine(message);
             int amount = 0;
+            Console.WriteLine(message);
+
             string? numberInput = Console.ReadLine();
-            while (numberInput == null || !int.TryParse(numberInput, out amount) || Convert.ToInt32(numberInput) < 0)
+            numberInput = numberInput.Trim();
+            while (numberInput == null || !int.TryParse(numberInput, out amount) || amount < 0)
             {
                 Console.WriteLine("that was an incorrect number");
                 numberInput = Console.ReadLine();
@@ -117,10 +140,13 @@ namespace habit_tracker
         }
         internal static string? GetDateInput()
         {
-            Console.WriteLine("\nEnter the date (dd-MM-yy). Type 0 to return.");
+            Console.WriteLine("\nEnter the date (dd-MM-yy).");
+            Console.WriteLine("Type 0 to return, or T to use today's date.");
 
             string? dateInput = Console.ReadLine();
-
+            // adds todays date if T is pressed
+            if (dateInput.Equals("T", StringComparison.OrdinalIgnoreCase))
+                return DateTime.Now.ToString("dd-MM-yy");
 
             if (dateInput == "0") return null;
 
@@ -142,45 +168,74 @@ namespace habit_tracker
 
             return dateInput;
         }
+
+        internal static string getHabit()
+        {
+            Console.WriteLine("Please enter the type, Max 20 characters long");
+            string? typeInput = Console.ReadLine();
+            while (typeInput == null || typeInput.Length > 20)
+            {
+                Console.WriteLine("Please enter the type, Max 20 characters long");
+                typeInput = Console.ReadLine();
+            }
+
+            return typeInput;
+        }
+
         // printing function
         private static void printAllRecords()
         {
-            Console.Clear();
-            using (var connection = new SqliteConnection(connectionString))
-            {
-                connection.Open();
-                var tableCmd = connection.CreateCommand();
-                tableCmd.CommandText = $"SELECT * FROM drinking_water";
 
-                List<DrinkingWater> tableData = new();
-                SqliteDataReader reader = tableCmd.ExecuteReader();
-                if (reader.HasRows)
+            Console.Clear();
+            try
+            {
+                using (var connection = new SqliteConnection(connectionString))
                 {
-                    while (reader.Read())
+                    connection.Open();
+                    var tableCmd = connection.CreateCommand();
+                    tableCmd.CommandText = $"SELECT * FROM drinking_water";
+
+                    List<DrinkingWater> tableData = new();
+                    SqliteDataReader reader = tableCmd.ExecuteReader();
+                    if (reader.HasRows)
                     {
-                        tableData.Add(
-                            new DrinkingWater
-                            {
-                                Id = reader.GetInt32(0),
-                                Date = DateTime.ParseExact(reader.GetString(1), "dd-MM-yy", new CultureInfo("en-GB")),
-                                quantity = reader.GetInt32(2)
-                            }
-                        );
+                        while (reader.Read())
+                        {
+                            tableData.Add(
+                                new DrinkingWater
+                                {
+                                    Id = reader.GetInt32(0),
+                                    Date = DateTime.ParseExact(reader.GetString(1), "dd-MM-yy", CultureInfo.InvariantCulture),
+                                    habitType = reader.GetString(2),
+                                    quantity = reader.GetInt32(3)
+                                }
+                            );
+                        }
                     }
+                    else
+                    {
+                        Console.WriteLine("No Rows Found, DataBase is Empty");
+                    }
+                    connection.Close();
+                    Console.WriteLine("ID--Type--Date--Amount----------");
+                    Console.WriteLine("---------------------------------");
+                    foreach (var dw in tableData)
+                    {
+                        Console.WriteLine($"{dw.Id} - {dw.habitType} - {dw.Date.ToString("dd-MM-yy")} - Quantity: {dw.quantity} ");
+                    }
+                    Console.WriteLine("---------------------------------");
                 }
-                else
-                {
-                    Console.WriteLine("No Rows Found, DataBase is Empty");
-                }
-                connection.Close();
-                Console.WriteLine("---------------------------------");
-                foreach (var dw in tableData)
-                {
-                    Console.WriteLine($"{dw.Id} - {dw.Date.ToString("dd-MM-yy")} - Quantity: {dw.quantity} ");
-                }
-                Console.WriteLine("---------------------------------");
+            }
+            catch (SqliteException ex)
+            {
+                Console.WriteLine("Unexpected Database Error");
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Unexpected Error");
             }
         }
+
         private static void getAllRecords()
         {
             printAllRecords();
@@ -212,26 +267,37 @@ namespace habit_tracker
                     Console.WriteLine("Invalid input. Please enter a number or 'x' to exit.");
                     continue;
                 }
-
-                using (var connection = new SqliteConnection(connectionString))
+                try
                 {
-                    connection.Open();
-                    var tableCmd = connection.CreateCommand();
-                    tableCmd.CommandText = $"DELETE FROM drinking_water WHERE id = {recordId}";
-
-                    int rowCount = tableCmd.ExecuteNonQuery();
-
-                    if (rowCount == 0)
+                    using (var connection = new SqliteConnection(connectionString))
                     {
-                        Console.WriteLine($"ID {recordId} not found!\n");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Record with ID {recordId} has been deleted.\n");
-                    }
+                        connection.Open();
+                        var tableCmd = connection.CreateCommand();
+                        tableCmd.CommandText = "DELETE FROM drinking_water WHERE Id = @id";
+                        tableCmd.Parameters.AddWithValue("@id", recordId);
+                        int rowCount = tableCmd.ExecuteNonQuery();
 
-                    connection.Close();
+                        if (rowCount == 0)
+                        {
+                            Console.WriteLine($"ID {recordId} not found!\n");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Record with ID {recordId} has been deleted.\n");
+                        }
+
+                        connection.Close();
+                    }
                 }
+                catch (SqliteException ex)
+                {
+                    Console.WriteLine("Unexpected Database Error");
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine("Unexpected Error");
+                }
+
                 Console.WriteLine("press y to continue, any other key to return to menu");
                 input = Console.ReadLine();
 
@@ -269,37 +335,49 @@ namespace habit_tracker
                     Console.WriteLine("Invalid input. Please enter a numeric ID or 'x' to exit.");
                     continue;
                 }
-
-                using (var connection = new SqliteConnection(connectionString))
+                try
                 {
-                    connection.Open();
-
-
-                    var checkCmd = connection.CreateCommand();
-                    checkCmd.CommandText = "SELECT EXISTS(SELECT 1 FROM drinking_water WHERE Id = @id)";
-                    checkCmd.Parameters.AddWithValue("@id", recordId);
-
-                    int exists = Convert.ToInt32(checkCmd.ExecuteScalar());
-                    if (exists == 0)
+                    using (var connection = new SqliteConnection(connectionString))
                     {
-                        Console.WriteLine($"\nRecord with ID {recordId} does not exist.");
-                        continue;
+                        connection.Open();
+
+
+                        var checkCmd = connection.CreateCommand();
+                        checkCmd.CommandText = "SELECT EXISTS(SELECT 1 FROM drinking_water WHERE Id = @id)";
+                        checkCmd.Parameters.AddWithValue("@id", recordId);
+
+                        int exists = Convert.ToInt32(checkCmd.ExecuteScalar());
+                        if (exists == 0)
+                        {
+                            Console.WriteLine($"\nRecord with ID {recordId} does not exist.");
+                            continue;
+                        }
+
+
+                        string? date = GetDateInput();
+                        string habit = getHabit();
+                        int qty = GetNumberInput("Enter new quantity:");
+
+
+                        var updateCmd = connection.CreateCommand();
+                        updateCmd.CommandText =
+    "UPDATE drinking_water SET date = @date, habitType = @habit, quantity = @qty WHERE Id = @id";
+
+                        updateCmd.Parameters.AddWithValue("@date", date);
+                        updateCmd.Parameters.AddWithValue("@habit", habit);
+                        updateCmd.Parameters.AddWithValue("@qty", qty);
+                        updateCmd.Parameters.AddWithValue("@id", recordId);
+                        updateCmd.ExecuteNonQuery();
+                        connection.Close();
                     }
-
-
-                    string? date = GetDateInput();
-                    int qty = GetNumberInput("Enter new quantity:");
-
-
-                    var updateCmd = connection.CreateCommand();
-                    updateCmd.CommandText =
-    "UPDATE drinking_water SET date = @date, quantity = @qty WHERE Id = @id";
-
-                    updateCmd.Parameters.AddWithValue("@date", date);
-                    updateCmd.Parameters.AddWithValue("@qty", qty);
-                    updateCmd.Parameters.AddWithValue("@id", recordId);
-                    updateCmd.ExecuteNonQuery();
-                    connection.Close();
+                }
+                catch (SqliteException ex)
+                {
+                    Console.WriteLine("Unexpected Database Error");
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine("Unexpected Error");
                 }
 
                 Console.WriteLine("Record updated successfully.");
