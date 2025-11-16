@@ -2,7 +2,7 @@
 using System;
 using System.Dynamic;
 using System.Globalization;
-using System.Numerics;
+
 using Microsoft.Data.Sqlite;
 
 namespace habit_tracker
@@ -11,8 +11,8 @@ namespace habit_tracker
     public class DrinkingWater
     {
         public int Id { get; set; }
-        public int quantity { get; set; }
-        public string habitType { get; set; }
+        public int Quantity { get; set; }
+        public string HabitType { get; set; }
         public DateTime Date { get; set; }
     }
     class Program
@@ -34,7 +34,7 @@ namespace habit_tracker
                 tableCmd.CommandText = @"CREATE TABLE IF NOT EXISTS drinking_water (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Date TEXT,
-                habitType TEXT,
+                HabitType TEXT,
                 Quantity INTEGER
                 )";
 
@@ -74,16 +74,16 @@ namespace habit_tracker
                         closeApp = true;
                         break;
                     case "1":
-                        getAllRecords();
+                        GetAllRecords();
                         break;
                     case "2":
-                        insert();
+                        Insert();
                         break;
                     case "3":
                         Delete();
                         break;
                     case "4":
-                        update();
+                        Update();
                         break;
                     default:
                         Console.WriteLine("not a valid command.Please choose from 0 to 4");
@@ -92,11 +92,11 @@ namespace habit_tracker
                 }
             }
         }
-        private static void insert()
+        private static void Insert()
         {
             string? date = GetDateInput();
-            string? habit = getHabit();
-            int quantity = GetNumberInput("\n\nPlease Insert a number of glasses or other measure of your choice (no decimals allowed)\n\n");
+            string? habit = GetHabit();
+            int Quantity = GetNumberInput("\n\nPlease Insert a number of glasses or other measure of your choice (no decimals allowed)\n\n");
             // wrapped in try statement incase error accessing database
             try
             {
@@ -104,10 +104,10 @@ namespace habit_tracker
                 {
                     connection.Open();
                     var tableCmd = connection.CreateCommand();
-                    tableCmd.CommandText = "INSERT INTO drinking_water(Date, habitType, Quantity) VALUES(@date, @habit, @quantity)";
+                    tableCmd.CommandText = "INSERT INTO drinking_water(Date, HabitType, Quantity) VALUES(@date, @habit, @Quantity)";
                     tableCmd.Parameters.AddWithValue("@date", date);
                     tableCmd.Parameters.AddWithValue("@habit", habit);
-                    tableCmd.Parameters.AddWithValue("@quantity", quantity);
+                    tableCmd.Parameters.AddWithValue("@Quantity", Quantity);
 
                     tableCmd.ExecuteNonQuery();
                     connection.Close();
@@ -169,7 +169,7 @@ namespace habit_tracker
             return dateInput;
         }
 
-        internal static string getHabit()
+        internal static string GetHabit()
         {
             Console.WriteLine("Please enter the type, Max 20 characters long");
             string? typeInput = Console.ReadLine();
@@ -206,8 +206,8 @@ namespace habit_tracker
                                 {
                                     Id = reader.GetInt32(0),
                                     Date = DateTime.ParseExact(reader.GetString(1), "dd-MM-yy", CultureInfo.InvariantCulture),
-                                    habitType = reader.GetString(2),
-                                    quantity = reader.GetInt32(3)
+                                    HabitType = reader.GetString(2),
+                                    Quantity = reader.GetInt32(3)
                                 }
                             );
                         }
@@ -221,7 +221,7 @@ namespace habit_tracker
                     Console.WriteLine("---------------------------------");
                     foreach (var dw in tableData)
                     {
-                        Console.WriteLine($"{dw.Id} - {dw.habitType} - {dw.Date.ToString("dd-MM-yy")} - Quantity: {dw.quantity} ");
+                        Console.WriteLine($"{dw.Id} - {dw.HabitType} - {dw.Date.ToString("dd-MM-yy")} - Quantity: {dw.Quantity} ");
                     }
                     Console.WriteLine("---------------------------------");
                 }
@@ -236,7 +236,7 @@ namespace habit_tracker
             }
         }
 
-        private static void getAllRecords()
+        private static void GetAllRecords()
         {
             printAllRecords();
             Console.WriteLine("\nPress any key to return to the menu...");
@@ -312,7 +312,7 @@ namespace habit_tracker
             }
         }
 
-        private static void update()
+        private static void Update()
         {
             while (true) // loop until user updates something or exits
             {
@@ -355,13 +355,13 @@ namespace habit_tracker
 
 
                         string? date = GetDateInput();
-                        string habit = getHabit();
-                        int qty = GetNumberInput("Enter new quantity:");
+                        string habit = GetHabit();
+                        int qty = GetNumberInput("Enter new Quantity:");
 
 
                         var updateCmd = connection.CreateCommand();
                         updateCmd.CommandText =
-    "UPDATE drinking_water SET date = @date, habitType = @habit, quantity = @qty WHERE Id = @id";
+    "UPDATE drinking_water SET date = @date, HabitType = @habit, Quantity = @qty WHERE Id = @id";
 
                         updateCmd.Parameters.AddWithValue("@date", date);
                         updateCmd.Parameters.AddWithValue("@habit", habit);
