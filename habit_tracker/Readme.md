@@ -16,4 +16,6 @@ You must state an integer amount, any non numeric value will be rejected
 for deleting a habit, you must state the Id of the record you wish to delete.
 dont worry a list of database will be printed for you, once deleted, it cant be brought back.
 
+if you are having an issue loading the project make sure you are going down all the way to habit_tracker folder. i kept the CodeReviews.Console.HabitTracker.sln and it can interfere with the project running.
+
 
