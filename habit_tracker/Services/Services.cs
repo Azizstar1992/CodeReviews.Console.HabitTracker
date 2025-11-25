@@ -49,7 +49,6 @@ namespace Services
                 }
             }
         }
-
         internal static void GetAllRecords()
         {
             PrintAllRecords();
@@ -80,8 +79,6 @@ namespace Services
 
         internal static void Update()
         {
-
-            
             while (true)
             {
                 PrintAllRecords();
@@ -114,7 +111,6 @@ namespace Services
 
         }
 
-
         internal static void Insert()
         {
             bool success = false;
@@ -122,7 +118,7 @@ namespace Services
             while (!success)
             {
                 string? date = GetDateInput();
-                if (date == null) return; // user cancelled
+                if (date == null) return; 
                 string habit = GetHabit();
                 int quantity = GetNumberInput("\nPlease insert the number of glasses or other measure:");
 
@@ -138,7 +134,7 @@ namespace Services
                     Console.WriteLine("Do you want to retry? (Y/N)");
                     string? choice = Console.ReadLine();
                     if (choice == null || choice.Equals("N", StringComparison.OrdinalIgnoreCase))
-                        return; // abort
+                        return; 
                 }
             }
 
@@ -151,7 +147,7 @@ namespace Services
         {
             PrintAllRecords();
             Console.WriteLine("Enter the ID of the record to delete:");
-            int id = GetNumberInput("ID:"); // your input helper
+            int id = GetNumberInput("ID:"); 
 
             
             if (!Database.IfExist(id))
@@ -161,8 +157,6 @@ namespace Services
                 Console.ReadKey(true);
                 return;
             }
-
-
             try
             {
                 Database.Delete(id);
@@ -218,7 +212,6 @@ namespace Services
                 if (dateInput == "0")
                     return null;
             }
-
             return dateInput;
         }
 

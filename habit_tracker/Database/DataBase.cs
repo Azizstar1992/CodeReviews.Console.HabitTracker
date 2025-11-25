@@ -9,16 +9,12 @@ namespace HabitTracker
 {
     public class Database
     {
-
-
         private static string dbFile = "./habit_tracker.db";
         private static string connectionString = $"Data Source={dbFile}";
 
 
         public static void CreateDatabase()
         {
-
-
             using (var connection = new SqliteConnection(connectionString))
             {
 
@@ -33,14 +29,8 @@ namespace HabitTracker
                 )";
 
                 tableCmd.ExecuteNonQuery();
-
-
                 connection.Close();
-
-
             }
-
-
         }
         public static void Update(int id, string newDate, string newHabit, int newQty)
         {
@@ -62,7 +52,6 @@ namespace HabitTracker
                         updateCmd.ExecuteNonQuery();
                     }
                 }
-
                 Console.WriteLine("Record updated successfully.");
             }
             catch (SqliteException ex)
@@ -92,7 +81,6 @@ namespace HabitTracker
             }
         }
 
-
         public static bool Delete(int id)
         {
             try
@@ -111,8 +99,6 @@ namespace HabitTracker
                 return false;
             }
         }
-
-
 
         public static bool IfExist(int id)
         {
@@ -170,9 +156,6 @@ namespace HabitTracker
 
             return tableData;
         }
-
-
     }
-
 }
 

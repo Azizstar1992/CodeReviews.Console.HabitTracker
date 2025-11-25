@@ -1,5 +1,4 @@
-﻿
-using Services;
+﻿using Services;
 
 class Program
 {
